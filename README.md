@@ -35,14 +35,66 @@ For more detail about each of these steps, see the project lesson [here](https:/
 
 ## Validation
 
-To get the external IP for your service (as the owner):
+####Install python dependencies
+
+```pip install -r requirements.txt```
+
+####Set up the environment
+
+JWT_SECRET - The secret used to make the JWT, for the purpose of this course the secret can be any string.
+
+LOG_LEVEL - It represents the level of logging. It is optional to be set. It has a default value as 'INFO', but when debugging an app locally, you may want to set it to 'DEBUG'. To add these to your terminal environment, run the following
+
 ```
-kubectl get services simple-jwt-api -o wide
+export JWT_SECRET='myjwtsecret'
+export LOG_LEVEL=DEBUG
 ```
+
+####Run the app using the Flask server
+
+from the top directory, run:
+
+```python main.py```
+
+Open http://127.0.0.1:8080/ in a new browser OR run ```curl --request GET http://localhost:8080/``` on the command-line terminal. It will give you a response as "Healthy".
+
+####Try the API endpoints on Command-Line
+
+Open another terminal window, and install jq, which is a package that helps to read or manipulate JSON processors. 
+
+For Linux
+
+```sudo apt-get install jq```
+
+For Mac
+
+```brew install jq```
+
+To try the /auth endpoint, use the following command, replacing email/password as applicable to you
+
+```
+export TOKEN=`curl --data '{"email":"abc@xyz.com","password":"mypwd"}' --header "Content-Type: application/json" -X POST localhost:8080/auth  | jq -r '.token'` 
+```
+
+This calls the endpoint 'localhost:8080/auth' with the email/password as the message body. The return value is a JWT token based on the secret string you supplied. We are assigning that secret to the environment variable 'TOKEN'. To see the JWT token, run:
+
+```echo $TOKEN```
+
+To try the /contents endpoint which decrypts the token and returns its content, run
+
+```curl --request GET 'http://localhost:8080/contents' -H "Authorization: Bearer ${TOKEN}" | jq .```
+
+To use the endpoints checking the working Docker container, you can use the same curl commands as before, except using port 80 this time
+
+```curl --request GET 'http://localhost:80/'```
+
+####To get the external IP for your service (as the owner):
+
+```kubectl get services simple-jwt-api -o wide```
 
 For this project: [ac08005c1a24141d08bc1335b725aa47-1054649433](ac08005c1a24141d08bc1335b725aa47-1054649433.us-west-2.elb.amazonaws.com)
 
-Then, use the external IP url to test the app (any user, the page returns the response 'Healthy'):
+####Then, use the external IP url to test the app (any user, the page returns the response 'Healthy'):
 ```
 export URL="<EXTERNAL-IP>.us-east-2.elb.amazonaws.com"
 export TOKEN=`curl -d '{"email":"<EMAIL>","password":"<PASSWORD>"}' -H "Content-Type: application/json" -X POST <EXTERNAL-IP URL>/auth  | jq -r '.token'`curl --request GET $URL:80/contents -H "Authorization: Bearer ${TOKEN}" | jq
